@@ -1,0 +1,13 @@
+# Runtime dependencies — Notes app backend (Django 5.2 LTS)
+Django>=5.2,<5.3
+djangorestframework>=3.17,<3.18
+djangorestframework-simplejwt>=5.5,<5.6
+django-cors-headers>=4.9,<4.10
+django-environ>=0.11,<0.13
+psycopg[binary]>=3.3,<3.4
+drf-spectacular>=0.30,<0.31
+gunicorn>=23,<24
+whitenoise>=6.8,<7
+# AI assist (optional — OpenAI-compatible client, points at Groq by default).
+# Feature degrades gracefully to a heuristic if LLM_API_KEY is unset.
+openai>=1.60,<2

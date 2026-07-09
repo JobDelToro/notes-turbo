@@ -1,0 +1,42 @@
+[project]
+name = "notes-backend"
+version = "1.0.0"
+description = "Notes app backend — Turbo AI hiring challenge"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-q --cov=accounts --cov=notes --cov=config --cov-report=term-missing"
+
+[tool.coverage.run]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "manage.py",
+    "config/wsgi.py",
+    "config/asgi.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+# Glob (not the bare dir name) so the exclude matches whether ruff is invoked
+# from backend/ (CI) or from the repo root with absolute paths (lint-staged).
+extend-exclude = ["**/migrations/**"]
+# Honor the exclude even for paths passed explicitly on the CLI (lint-staged),
+# so Django's auto-generated migrations aren't linted on commit.
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+# Declare the project's own packages so import sorting is identical whether ruff
+# runs from backend/ (CI) or from the repo root with --config (lint-staged),
+# instead of relying on CWD-dependent first-party auto-detection.
+[tool.ruff.lint.isort]
+known-first-party = ["accounts", "config", "notes"]
