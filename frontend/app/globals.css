@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens (Figma). Tailwind 4 is CSS-first: everything declared inside
+ * `@theme` is both a CSS custom property and an auto-generated utility
+ * (e.g. `--color-cream` -> `bg-cream`, `text-cream`, `border-cream`).
+ * Category colors intentionally live in @theme too so category classes like
+ * `bg-cat-personal` exist, while runtime category colors (from the API) are
+ * applied inline via lib/categoryColor.ts.
+ */
+@theme {
+  /* Fonts — bound to the next/font CSS variables set on <html>. */
+  --font-serif: var(--font-inria-serif), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces & brand */
+  --color-cream: #f5eedc; /* page background */
+  --color-surface: #faf1e3; /* popover / menu / dropdown */
+  --color-gold: #957139; /* input & button borders, button text */
+  --color-ink: #1a1a1a; /* near-black text */
+  --color-ink-muted: #6b6459; /* secondary text / placeholders */
+
+  /* Category palette (base hue; fills are applied at 50% alpha at runtime) */
+  --color-cat-random: #ef9c66; /* Random Thoughts */
+  --color-cat-school: #fcdc94; /* School */
+  --color-cat-personal: #78aba8; /* Personal */
+  --color-cat-drama: #c8cfa0; /* Drama */
+
+  /* Note card shadow */
+  --shadow-card: 1px 1px 2px rgba(0, 0, 0, 0.25);
+
+  /* Radii from the spec */
+  --radius-card: 11px;
+  --radius-pill: 46px;
+  --radius-field: 6px;
+  --radius-menu: 8px;
+}
+
+@layer base {
+  html {
+    height: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Consistent focus ring in the brand color, respecting keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
+/* Masonry-ish grid using CSS columns so cards keep their natural height and
+ * flow into 3 balanced columns. Falls back to fewer columns on narrow widths
+ * via utility overrides in the component. */
+@utility masonry-3 {
+  column-count: 3;
+  column-gap: 16px;
+}
