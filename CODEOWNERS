@@ -1,0 +1,9 @@
+# Code ownership — reviews are auto-requested by path (last match wins).
+# Solo project for now: everything routes to the owner. Split per area as the team grows.
+* @JobDelToro
+
+/backend/    @JobDelToro
+/frontend/   @JobDelToro
+/.github/    @JobDelToro
+/.claude/    @JobDelToro
+/docs/       @JobDelToro

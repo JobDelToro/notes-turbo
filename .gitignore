@@ -1,0 +1,47 @@
+# ===================== Python / Django =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+*.sqlite3
+db.sqlite3
+/backend/staticfiles/
+/backend/media/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ===================== Node / Next.js =====================
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+next-env.d.ts
+.pnp.*
+
+# ===================== Env & secrets =====================
+.env
+.env.*
+!.env.example
+
+# ===================== OS / Editor =====================
+.DS_Store
+Thumbs.db
+.idea/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# ===================== Docker =====================
+docker-compose.override.yml

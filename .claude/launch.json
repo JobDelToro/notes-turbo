@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd frontend && exec npm run dev -- --port 6001"],
+      "port": 6001
+    },
+    {
+      "name": "frontend-prod",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd frontend && exec npm run start -- --port 6001"],
+      "port": 6001
+    }
+  ]
+}

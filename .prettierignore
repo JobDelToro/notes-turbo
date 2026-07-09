@@ -1,0 +1,8 @@
+# Generated lock files — managed by npm, never reformat
+package-lock.json
+
+# Build output & vendored deps (also git-ignored)
+.next/
+node_modules/
+.venv/
+staticfiles/

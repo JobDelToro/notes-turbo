@@ -1,0 +1,2 @@
+npx --no-install commitlint --edit "$1"
+"$(dirname "$0")/no-ai-trace.sh" "$1"

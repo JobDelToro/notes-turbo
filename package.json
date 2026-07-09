@@ -1,0 +1,38 @@
+{
+  "name": "notes-turbo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Notes app — Django (backend/) + Next.js (frontend/). Per-user notes and categories with optional AI assist.",
+  "license": "UNLICENSED",
+  "author": "Job",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "dev": "echo 'Run backend and frontend in separate terminals:\\n  backend:  cd backend && .venv/bin/python manage.py runserver\\n  frontend: cd frontend && npm run dev' && exit 0",
+    "test": "echo 'Backend: cd backend && .venv/bin/pytest\\nFrontend: cd frontend && npm test' && exit 0",
+    "lint": "echo 'Backend: cd backend && ruff check .\\nFrontend: cd frontend && npm run lint' && exit 0",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2"
+  },
+  "lint-staged": {
+    "*.py": [
+      "backend/.venv/bin/ruff check --fix --config backend/pyproject.toml",
+      "backend/.venv/bin/ruff format --config backend/pyproject.toml"
+    ],
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+# One-command local stack: Postgres + Django API + Next.js web.
+#   docker compose up --build
+# Values interpolate from a local .env (see .env.example); all have safe defaults.
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes
+      POSTGRES_DB: notes
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env (see .env.example)}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      DATABASE_URL: postgres://notes:notes@db:5432/notes
+      FRONTEND_ORIGIN: http://localhost:3000
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_CLASSIFIER_MODEL: ${LLM_CLASSIFIER_MODEL:-llama-3.1-8b-instant}
+      LLM_GENERATOR_MODEL: ${LLM_GENERATOR_MODEL:-llama-3.3-70b-versatile}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Browser-facing API URL, inlined into the build (published backend port).
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
