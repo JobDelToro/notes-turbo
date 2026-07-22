@@ -4,7 +4,11 @@
 
 services:
   db:
-    image: postgres:18-alpine
+    # Pinned to 17. postgres:18 relocated its data dir to a version-specific
+    # subdir of /var/lib/postgresql, which is incompatible with the
+    # /var/lib/postgresql/data volume mount below — an 18 container exits on
+    # start. Bump to 18 only together with that mount path.
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: notes
       POSTGRES_PASSWORD: notes
