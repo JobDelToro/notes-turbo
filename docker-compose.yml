@@ -4,7 +4,9 @@
 
 services:
   db:
-    image: postgres:18-alpine
+    # Pinned to 17: postgres:18-alpine fails to start in this stack; 17 is the
+    # known-good image and matches the prod-parity target in docs/architecture.md.
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: notes
       POSTGRES_PASSWORD: notes
