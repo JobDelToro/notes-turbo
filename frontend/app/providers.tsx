@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MotionConfig } from 'motion/react';
 import { ApiError } from '@/lib/api';
 
 /**
- * App-wide client providers. The QueryClient is created once per browser
- * session via `useState` (never at module scope) so state is not shared
- * across requests during SSR.
+ * App-wide client providers.
+ *  - The QueryClient is created once per browser session via `useState` (never at
+ *    module scope) so state is not shared across requests during SSR.
+ *  - MotionConfig `reducedMotion="user"` makes every Motion animation honor the
+ *    OS "reduce motion" setting automatically (accessibility).
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,5 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </QueryClientProvider>
+  );
 }

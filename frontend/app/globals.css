@@ -1,66 +1,264 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens (Figma). Tailwind 4 is CSS-first: everything declared inside
- * `@theme` is both a CSS custom property and an auto-generated utility
- * (e.g. `--color-cream` -> `bg-cream`, `text-cream`, `border-cream`).
- * Category colors intentionally live in @theme too so category classes like
- * `bg-cat-personal` exist, while runtime category colors (from the API) are
- * applied inline via lib/categoryColor.ts.
- */
+/* ============================================================================
+ * Notes — "Pop" design system  ·  playful · modern · mobile-first
+ *
+ * Tailwind 4 is CSS-first: every token in @theme becomes both a CSS custom
+ * property and a utility (e.g. `--color-primary` -> `bg-primary`, `text-primary`).
+ * Light values are the default; the dark block overrides the same variables.
+ *
+ * Design decisions (the "why", so they're defensible):
+ *  - One vivid accent (indigo-violet) carries the brand; category colors are the
+ *    only other saturated hues, and they only ever tag a note.
+ *  - Rounder radii + soft, slightly violet-tinted shadows read friendly/modern.
+ *  - Spring easing (a little overshoot) makes motion feel alive, not mechanical.
+ *  - A full semantic scale (surface / surface-2 / border / ink / ink-muted)
+ *    is what makes a real light+dark theme possible from one set of components.
+ * ========================================================================== */
 @theme {
-  /* Fonts — bound to the next/font CSS variables set on <html>. */
-  --font-serif: var(--font-inria-serif), Georgia, 'Times New Roman', serif;
+  /* ---- Fonts (bound to the next/font CSS variables set on <html>) ---- */
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Back-compat alias so existing `font-serif` usages pick up the new display face. */
+  --font-serif: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces & brand */
-  --color-cream: #f5eedc; /* page background */
-  --color-surface: #faf1e3; /* popover / menu / dropdown */
-  --color-gold: #957139; /* input & button borders, button text */
-  --color-ink: #1a1a1a; /* near-black text */
-  --color-ink-muted: #6b6459; /* secondary text / placeholders */
+  /* ---- Surfaces & text (light) ---- */
+  --color-canvas: #f5f5fb; /* app background (cool off-white, hint of lavender) */
+  --color-surface: #ffffff; /* cards / sheets / menus */
+  --color-surface-2: #eeeef7; /* subtle raised / muted fill */
+  --color-border: #e6e6f1;
+  --color-ink: #191927; /* primary text (cool near-black) */
+  --color-ink-muted: #6a6a83; /* secondary text / placeholders */
+  /* Back-compat alias for the old `cream` app-background name. */
+  --color-cream: #f5f5fb;
 
-  /* Category palette (base hue; fills are applied at 50% alpha at runtime) */
-  --color-cat-random: #ef9c66; /* Random Thoughts */
-  --color-cat-school: #fcdc94; /* School */
-  --color-cat-personal: #78aba8; /* Personal */
-  --color-cat-drama: #c8cfa0; /* Drama */
+  /* ---- Brand accent (vivid indigo-violet) ---- */
+  --color-primary: #6c5ce7;
+  --color-primary-hover: #5a49d8;
+  --color-primary-soft: #ece9ff; /* tint background for primary chips/rings */
+  --color-on-primary: #ffffff;
+  /* Back-compat alias: everything that said `gold` now speaks primary. */
+  --color-gold: #6c5ce7;
 
-  /* Note card shadow */
-  --shadow-card: 1px 1px 2px rgba(0, 0, 0, 0.25);
+  /* Playful secondary accent (coral-pink) for highlights / celebration. */
+  --color-accent: #ff6b9d;
 
-  /* Radii from the spec */
-  --radius-card: 11px;
-  --radius-pill: 46px;
-  --radius-field: 6px;
-  --radius-menu: 8px;
+  /* ---- Category palette (vibrant candy — the note tags) ---- */
+  --color-cat-random: #ff7a5c; /* Random Thoughts — coral */
+  --color-cat-school: #ffc53d; /* School — amber */
+  --color-cat-personal: #2ec4b6; /* Personal — teal */
+  --color-cat-drama: #8bc34a; /* Drama — green */
+
+  /* ---- Semantic ---- */
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+
+  /* ---- Radii (playful = rounder) ---- */
+  --radius-sm: 10px;
+  --radius-card: 18px; /* note cards / sheets */
+  --radius-menu: 14px;
+  --radius-field: 12px;
+  --radius-pill: 999px;
+  --radius-lg: 26px;
+
+  /* ---- Elevation (soft, slightly violet-tinted) ---- */
+  --shadow-sm: 0 1px 2px rgba(25, 25, 39, 0.06);
+  --shadow-card: 0 6px 20px -8px rgba(108, 92, 231, 0.22);
+  --shadow-md: 0 8px 24px -8px rgba(108, 92, 231, 0.22);
+  --shadow-lg: 0 22px 48px -16px rgba(108, 92, 231, 0.34);
+
+  /* ---- Motion ---- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* gentle overshoot */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-med: 260ms;
+  --dur-slow: 440ms;
+}
+
+/* ---- Dark mode: override token VALUES only (components don't change) ---- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #0f0f19;
+    --color-cream: #0f0f19;
+    --color-surface: #191926;
+    --color-surface-2: #232338;
+    --color-border: #2c2c44;
+    --color-ink: #ececf6;
+    --color-ink-muted: #9a9ab8;
+    --color-primary: #8b7bff;
+    --color-primary-hover: #9d90ff;
+    --color-primary-soft: #211e3b;
+    --color-gold: #8b7bff;
+    --color-accent: #ff7fab;
+    --shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 22px 48px -16px rgba(0, 0, 0, 0.6);
+  }
 }
 
 @layer base {
   html {
     height: 100%;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     min-height: 100%;
-    background-color: var(--color-cream);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none; /* no rubber-band flash on mobile */
   }
 
-  /* Consistent focus ring in the brand color, respecting keyboard users. */
+  /* Keyboard focus in the brand color; never suppressed for mouse-only. */
   :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2.5px solid var(--color-primary);
     outline-offset: 2px;
+    border-radius: 5px;
+  }
+
+  ::selection {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 }
 
-/* Masonry-ish grid using CSS columns so cards keep their natural height and
- * flow into 3 balanced columns. Falls back to fewer columns on narrow widths
- * via utility overrides in the component. */
-@utility masonry-3 {
-  column-count: 3;
-  column-gap: 16px;
+/* ============================================================================
+ * Keyframes — the playful motion vocabulary
+ * ========================================================================== */
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -180% 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Loading skeleton (shimmer). */
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    var(--color-border) 37%,
+    var(--color-surface-2) 63%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Animated brand gradient (hero text / accents). */
+@utility brand-gradient {
+  background: linear-gradient(100deg, var(--color-primary), var(--color-accent), var(--color-primary));
+  background-size: 200% auto;
+  animation: gradient-pan 6s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* One accessibility switch to rule them all. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+ * Onboarding tour (driver.js) — themed to "Pop"
+ * ========================================================================== */
+.driver-popover.notes-tour {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-menu);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+  max-width: 320px;
+  padding: 18px;
+}
+.driver-popover.notes-tour .driver-popover-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.driver-popover.notes-tour .driver-popover-description {
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.driver-popover.notes-tour .driver-popover-progress-text {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+/* The stage highlight is a soft violet ring rather than a hard cutout. */
+.driver-popover.notes-tour .driver-popover-arrow {
+  display: none;
+}
+.driver-popover.notes-tour button.driver-popover-next-btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: none;
+  transition: background-color 150ms ease;
+}
+.driver-popover.notes-tour button.driver-popover-next-btn:hover {
+  background: var(--color-primary-hover);
+}
+.driver-popover.notes-tour button.driver-popover-prev-btn {
+  background: transparent;
+  color: var(--color-ink-muted);
+  border: none;
+  text-shadow: none;
+  font-weight: 500;
+}
+.driver-popover.notes-tour button.driver-popover-close-btn {
+  color: var(--color-ink-muted);
 }

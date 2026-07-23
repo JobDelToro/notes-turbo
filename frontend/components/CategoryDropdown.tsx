@@ -136,9 +136,9 @@ export function CategoryDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'flex h-[39px] w-full items-center gap-2 rounded-[6px] border border-gold',
-          'bg-transparent px-[15px] py-[7px] text-xs text-ink',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60',
+          'flex h-10 w-full items-center gap-2 rounded-[var(--radius-field)] border border-border',
+          'bg-surface px-3 py-2 text-sm text-ink transition-colors hover:bg-surface-2',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
         )}
       >
         {dotColor ? (
@@ -151,7 +151,7 @@ export function CategoryDropdown({
         <span className={cn('flex-1 truncate text-left', !selected && 'text-ink-muted')}>
           {label}
         </span>
-        <ChevronDownIcon size={16} className="shrink-0 text-gold" />
+        <ChevronDownIcon size={16} className="shrink-0 text-ink-muted" />
       </button>
 
       {open ? (
@@ -162,7 +162,7 @@ export function CategoryDropdown({
           tabIndex={-1}
           ref={listRef}
           onKeyDown={onListKeyDown}
-          className="absolute z-20 mt-1 w-[225px] overflow-hidden rounded-[8px] bg-surface py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
+          className="absolute z-20 mt-1 w-[225px] overflow-hidden rounded-[var(--radius-menu)] border border-border bg-surface py-1 shadow-[var(--shadow-lg)] focus:outline-none"
         >
           {options.map((option, index) => {
             const isSelected = option.id === value;
@@ -176,8 +176,8 @@ export function CategoryDropdown({
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => commit(index)}
                 className={cn(
-                  'flex h-8 cursor-pointer items-center gap-2 px-4 text-xs text-ink',
-                  isActive && 'bg-gold/10',
+                  'flex h-9 cursor-pointer items-center gap-2 px-3 text-sm text-ink',
+                  isActive && 'bg-surface-2',
                   isSelected && 'font-semibold',
                 )}
               >

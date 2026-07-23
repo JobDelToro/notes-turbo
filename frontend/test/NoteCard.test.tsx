@@ -23,7 +23,7 @@ describe('NoteCard', () => {
     expect(screen.getByText('Personal')).toBeInTheDocument();
   });
 
-  it('applies the category color as border and 50%-alpha fill', () => {
+  it('applies the category color as a low-alpha border and a solid accent bar', () => {
     render(
       <NoteCard
         note={makeNote({
@@ -33,9 +33,10 @@ describe('NoteCard', () => {
       />,
     );
     const card = screen.getByRole('button');
-    // Border is the raw category color; the fill is that color at 50% alpha.
-    expect(card.style.borderColor).toBe(hexToCss('#78ABA8'));
-    expect(card.style.backgroundColor).toBe(hexToCss('#78ABA8', 0.5));
+    // Border is the category color at 34% alpha; the top accent bar is the solid color.
+    expect(card.style.borderColor).toBe(hexToCss('#78ABA8', 0.34));
+    const accentBar = card.querySelector('span[aria-hidden]') as HTMLElement | null;
+    expect(accentBar?.style.backgroundColor).toBe(hexToCss('#78ABA8'));
   });
 
   it('falls back to the uncategorized color when there is no category', () => {
@@ -43,7 +44,7 @@ describe('NoteCard', () => {
       <NoteCard note={makeNote({ category: null, category_detail: null })} onOpen={vi.fn()} />,
     );
     expect(screen.getByText('Uncategorized')).toBeInTheDocument();
-    expect(screen.getByRole('button').style.borderColor).toBe(hexToCss('#957139'));
+    expect(screen.getByRole('button').style.borderColor).toBe(hexToCss('#957139', 0.34));
   });
 
   it('calls onOpen with the note when clicked', async () => {

@@ -7,11 +7,13 @@ export default function LoginPage() {
   const mutation = useLogin();
   return (
     <AuthForm
-      heading="Yay, You're Back!"
-      submitLabel="Login"
+      heading="Welcome back"
+      subheading="Your notes are right where you left them. Log in to pick up the thread."
+      submitLabel="Log in"
       mutation={mutation}
+      altPrompt="New here?"
       altHref="/signup"
-      altLabel="Oops! I've never been here before"
+      altLabel="Create an account"
     />
   );
 }

@@ -1,26 +1,28 @@
 import type { Metadata } from 'next';
-import { Inria_Serif, Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-// UI / body — Inter is a variable font (full weight range).
+// Body / UI — Inter, a variable font with the full weight range.
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
   display: 'swap',
 });
 
-// Titles / headings — Inria Serif ships fixed weights; we use Regular + Bold.
-const inriaSerif = Inria_Serif({
-  variable: '--font-inria-serif',
+// Display / headings — Outfit: a modern geometric sans with a friendly, playful
+// edge. Replaces the old serif to set the new "Pop" tone.
+const outfit = Outfit({
+  variable: '--font-outfit',
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Notes',
-  description: 'A charming little notes app.',
+  title: 'Notes — think in color',
+  description:
+    'A delightfully simple notes app, with an AI helper that files and summarizes for you.',
 };
 
 export default function RootLayout({
@@ -29,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${inriaSerif.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} h-full`}>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

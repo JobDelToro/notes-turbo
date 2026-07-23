@@ -8,6 +8,8 @@ type TextInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> 
   label?: string;
   /** Validation message; renders below and wires up aria-describedby. */
   error?: string;
+  /** Optional icon rendered inside the field on the left (e.g. a mail glyph). */
+  leadingIcon?: React.ReactNode;
   /**
    * `password` renders an eye toggle on the right that flips visibility.
    * Any other value is passed straight to the underlying input.
@@ -16,11 +18,12 @@ type TextInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> 
 };
 
 /**
- * Field input from the design system: 1px gold border, radius 6px, 39px tall,
- * 7/15 padding, Inter 12px. Password variant adds a right-aligned eye toggle.
+ * Field input in the "Pop" system: 44px tall (a comfortable touch target),
+ * rounded, on a surface fill with a soft border that turns violet on focus.
+ * An optional leading icon and the password eye toggle share the same insets.
  */
 export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput(
-  { label, error, type = 'text', id, className, ...props },
+  { label, error, leadingIcon, type = 'text', id, className, ...props },
   ref,
 ) {
   const generatedId = useId();
@@ -31,13 +34,21 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
   const effectiveType = isPassword ? (revealed ? 'text' : 'password') : type;
 
   return (
-    <div className={cn('flex w-full flex-col gap-1', className)}>
+    <div className={cn('flex w-full flex-col gap-1.5', className)}>
       {label ? (
-        <label htmlFor={inputId} className="text-xs font-medium text-ink">
+        <label htmlFor={inputId} className="text-sm font-medium text-ink">
           {label}
         </label>
       ) : null}
       <div className="relative">
+        {leadingIcon ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-ink-muted"
+          >
+            {leadingIcon}
+          </span>
+        ) : null}
         <input
           ref={ref}
           id={inputId}
@@ -45,11 +56,13 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            'h-[39px] w-full rounded-[6px] border border-gold bg-transparent',
-            'px-[15px] py-[7px] text-xs text-ink placeholder:text-ink-muted',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60',
-            isPassword && 'pr-10',
-            error && 'border-red-500',
+            'h-11 w-full rounded-[var(--radius-field)] border border-border bg-surface',
+            'px-4 text-sm text-ink placeholder:text-ink-muted',
+            'transition-[border-color,box-shadow] duration-150',
+            'focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/35',
+            Boolean(leadingIcon) && 'pl-11',
+            isPassword && 'pr-11',
+            error && 'border-danger focus-visible:border-danger focus-visible:ring-danger/30',
           )}
           {...props}
         />
@@ -59,14 +72,14 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
             onClick={() => setRevealed((v) => !v)}
             aria-label={revealed ? 'Hide password' : 'Show password'}
             aria-pressed={revealed}
-            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gold hover:text-ink"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-muted transition-colors hover:text-ink"
           >
-            {revealed ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+            {revealed ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
           </button>
         ) : null}
       </div>
       {error ? (
-        <p id={errorId} role="alert" className="text-xs text-red-600">
+        <p id={errorId} role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       ) : null}

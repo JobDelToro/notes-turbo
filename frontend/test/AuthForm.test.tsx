@@ -22,6 +22,12 @@ function mockMutation(overrides: Partial<AuthMutation> = {}): AuthMutation {
   } as unknown as AuthMutation;
 }
 
+/** The two screens differ only in copy; these fill the shared required props. */
+const baseProps = {
+  subheading: 'A supporting line.',
+  altPrompt: 'New here?',
+} as const;
+
 describe('AuthForm', () => {
   beforeEach(() => {
     routerMock.push.mockClear();
@@ -31,17 +37,18 @@ describe('AuthForm', () => {
     const mutation = mockMutation();
     render(
       <AuthForm
-        heading="Yay, New Friend!"
-        submitLabel="Sign Up"
+        {...baseProps}
+        heading="Create your account"
+        submitLabel="Sign up"
         mutation={mutation}
         altHref="/login"
-        altLabel="We're already friends!"
+        altLabel="Log in"
       />,
     );
 
     await userEvent.type(screen.getByLabelText('Email'), 'not-an-email');
     await userEvent.type(screen.getByLabelText('Password'), 'supersecret');
-    await userEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
 
     expect(screen.getByText(/valid email address/i)).toBeInTheDocument();
     expect(mutation.mutate).not.toHaveBeenCalled();
@@ -51,17 +58,18 @@ describe('AuthForm', () => {
     const mutation = mockMutation();
     render(
       <AuthForm
-        heading="Yay, You're Back!"
-        submitLabel="Login"
+        {...baseProps}
+        heading="Welcome back"
+        submitLabel="Log in"
         mutation={mutation}
         altHref="/signup"
-        altLabel="Never been here"
+        altLabel="Create an account"
       />,
     );
 
     await userEvent.type(screen.getByLabelText('Email'), 'user@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'short');
-    await userEvent.click(screen.getByRole('button', { name: 'Login' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
     expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument();
     expect(mutation.mutate).not.toHaveBeenCalled();
@@ -71,17 +79,18 @@ describe('AuthForm', () => {
     const mutation = mockMutation();
     render(
       <AuthForm
-        heading="Yay, New Friend!"
-        submitLabel="Sign Up"
+        {...baseProps}
+        heading="Create your account"
+        submitLabel="Sign up"
         mutation={mutation}
         altHref="/login"
-        altLabel="We're already friends!"
+        altLabel="Log in"
       />,
     );
 
     await userEvent.type(screen.getByLabelText('Email'), 'user@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'supersecret');
-    await userEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
 
     expect(mutation.mutate).toHaveBeenCalledWith(
       { email: 'user@example.com', password: 'supersecret' },
@@ -95,11 +104,12 @@ describe('AuthForm', () => {
     });
     render(
       <AuthForm
-        heading="Yay, You're Back!"
-        submitLabel="Login"
+        {...baseProps}
+        heading="Welcome back"
+        submitLabel="Log in"
         mutation={mutation}
         altHref="/signup"
-        altLabel="Never been here"
+        altLabel="Create an account"
       />,
     );
     expect(screen.getByText('Invalid email or password.')).toBeInTheDocument();
@@ -108,11 +118,12 @@ describe('AuthForm', () => {
   it('toggles password visibility with the eye button', async () => {
     render(
       <AuthForm
-        heading="Yay, New Friend!"
-        submitLabel="Sign Up"
+        {...baseProps}
+        heading="Create your account"
+        submitLabel="Sign up"
         mutation={mockMutation()}
         altHref="/login"
-        altLabel="We're already friends!"
+        altLabel="Log in"
       />,
     );
     const password = screen.getByLabelText('Password') as HTMLInputElement;

@@ -1,25 +1,25 @@
 'use client';
 
+import { motion } from 'motion/react';
 import type { Category } from '@/lib/schemas';
+import { categoryColor } from '@/lib/categoryColor';
 import { cn } from '@/lib/cn';
+import { Logomark } from './illustrations/Logomark';
 
 export interface CategorySidebarProps {
   categories: Category[];
-  /** Currently selected category id, or null for "All Categories". */
+  /** Currently selected category id, or null for "All". */
   selectedId: number | null;
   onSelect: (categoryId: number | null) => void;
   isLoading?: boolean;
-  /**
-   * Total note count for the "All Categories" row. Includes uncategorized notes,
-   * which aren't in any category's count. Falls back to summing category counts.
-   */
+  /** Total notes for the "All" chip (includes uncategorized). */
   totalCount?: number;
 }
 
 /**
- * Left navigation (288px). "All Categories" header, then one row per category
- * with a colored dot, the name, and the note count aligned right. Clicking a
- * row filters the grid.
+ * Category navigation. Mobile-first: a horizontal, thumb-scrollable pill bar at
+ * the top; on `lg` it becomes a fixed 288px left rail. The active pill's
+ * background is a single shared element (`layoutId`) that springs between pills.
  */
 export function CategorySidebar({
   categories,
@@ -33,30 +33,39 @@ export function CategorySidebar({
   return (
     <nav
       aria-label="Categories"
-      className="flex shrink-0 gap-1 overflow-x-auto border-b border-gold/10 px-4 py-3 lg:w-72 lg:flex-col lg:overflow-x-visible lg:border-b-0 lg:py-6"
+      data-tour="categories"
+      className={cn(
+        'flex shrink-0 gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        'lg:w-72 lg:flex-col lg:gap-1 lg:overflow-visible lg:border-r lg:border-border lg:px-4 lg:py-8',
+      )}
     >
-      <SidebarRow
-        label="All Categories"
+      <div className="mb-5 hidden items-center gap-2.5 px-2 lg:flex">
+        <Logomark size={30} />
+        <span className="font-display text-lg font-extrabold tracking-tight text-ink">Notes</span>
+      </div>
+
+      <p className="hidden px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted lg:block">
+        Categories
+      </p>
+
+      <Chip
+        label="All"
         count={allCount}
-        isHeader
-        isActive={selectedId === null}
+        active={selectedId === null}
         onClick={() => onSelect(null)}
       />
 
       {isLoading && categories.length === 0
         ? Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-8 w-28 shrink-0 animate-pulse rounded-md bg-gold/10 lg:w-full"
-            />
+            <div key={i} className="skeleton h-9 w-24 shrink-0 rounded-full lg:h-10 lg:w-full" />
           ))
         : categories.map((category) => (
-            <SidebarRow
+            <Chip
               key={category.id}
               label={category.name}
               count={category.note_count}
-              color={category.color}
-              isActive={selectedId === category.id}
+              color={categoryColor(category)}
+              active={selectedId === category.id}
               onClick={() => onSelect(category.id)}
             />
           ))}
@@ -64,47 +73,49 @@ export function CategorySidebar({
   );
 }
 
-function SidebarRow({
+function Chip({
   label,
   count,
   color,
-  isHeader,
-  isActive,
+  active,
   onClick,
 }: {
   label: string;
   count: number;
   color?: string;
-  isHeader?: boolean;
-  isActive: boolean;
+  active: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-current={isActive ? 'true' : undefined}
+      aria-current={active ? 'true' : undefined}
       className={cn(
-        'flex h-8 shrink-0 items-center gap-2 rounded-md px-3 text-left transition-colors lg:px-2',
-        'hover:bg-gold/10',
-        isActive && 'bg-gold/15',
+        'relative flex h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm transition-colors lg:h-10 lg:px-3',
+        active ? 'text-ink' : 'text-ink-muted hover:bg-surface-2 hover:text-ink',
       )}
     >
+      {active ? (
+        <motion.span
+          layoutId="cat-active"
+          aria-hidden
+          className="absolute inset-0 -z-10 rounded-full bg-surface-2 shadow-[var(--shadow-sm)]"
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+        />
+      ) : null}
+
       {color ? (
         <span
           aria-hidden
-          className="inline-block h-[11px] w-[11px] shrink-0 rounded-full"
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: color }}
         />
       ) : (
-        <span aria-hidden className="inline-block h-[11px] w-[11px] shrink-0" />
+        <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full border border-border" />
       )}
-      <span
-        className={cn('truncate text-ink lg:flex-1', isHeader ? 'text-sm font-bold' : 'text-sm')}
-      >
-        {label}
-      </span>
-      <span className="text-xs tabular-nums text-ink/60">{count}</span>
+      <span className="truncate font-medium lg:flex-1">{label}</span>
+      <span className="text-xs tabular-nums text-ink-muted/80">{count}</span>
     </button>
   );
 }

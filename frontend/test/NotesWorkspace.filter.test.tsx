@@ -17,6 +17,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => routerMock }));
 // Mock the data layer so the test drives category -> notes purely through props.
 const useNotesMock = vi.fn();
 vi.mock('@/lib/queries', () => ({
+  useMe: () => ({ data: { id: 1, email: 'alice@example.com' } }),
   useCategories: () => ({ data: categories, isLoading: false }),
   useNotes: (categoryId: number | null) => useNotesMock(categoryId),
   useCreateNote: () => ({ mutate: vi.fn(), isPending: false }),
@@ -59,6 +60,6 @@ describe('NotesWorkspace category filter', () => {
     render(<NotesWorkspace />);
     // "Drama" (id 4) has no notes in the fixture.
     await clickSidebarCategory(/Drama/);
-    expect(screen.getByText(/waiting for your charming notes/i)).toBeInTheDocument();
+    expect(screen.getByText(/nothing here yet/i)).toBeInTheDocument();
   });
 });

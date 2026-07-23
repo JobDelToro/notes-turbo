@@ -1,0 +1,2 @@
+# Static assets served at the site root (e.g. /robots.txt).
+# Kept so the directory exists — the standalone Docker build copies it verbatim.

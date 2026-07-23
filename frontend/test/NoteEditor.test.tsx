@@ -94,7 +94,7 @@ describe('NoteEditor', () => {
         />,
       );
       // Type inside the debounce window, then delete before it elapses.
-      fireEvent.change(screen.getByPlaceholderText('Note Title'), {
+      fireEvent.change(screen.getByLabelText('Note title'), {
         target: { value: 'Half-typed' },
       });
       fireEvent.click(screen.getByRole('button', { name: /delete note/i }));
@@ -128,10 +128,10 @@ describe('NoteEditor', () => {
           onClose={vi.fn()}
         />,
       );
-      fireEvent.change(screen.getByPlaceholderText('Note Title'), {
+      fireEvent.change(screen.getByLabelText('Note title'), {
         target: { value: 'My Title' },
       });
-      fireEvent.change(screen.getByPlaceholderText('Pour your heart out...'), {
+      fireEvent.change(screen.getByLabelText('Note content'), {
         target: { value: 'My body' },
       });
       vi.advanceTimersByTime(700);

@@ -22,7 +22,7 @@ describe('CategorySidebar — All Categories total', () => {
       />,
     );
 
-    const allRow = rowFor('All Categories');
+    const allRow = rowFor('All');
     expect(within(allRow).getByText('7')).toBeInTheDocument();
     // Not the sum of per-category counts, which would miss the uncategorized note.
     expect(within(allRow).queryByText(String(SUM_OF_CATEGORY_COUNTS))).not.toBeInTheDocument();
@@ -31,7 +31,7 @@ describe('CategorySidebar — All Categories total', () => {
   it('falls back to summing category counts when no total is given', () => {
     render(<CategorySidebar categories={categories} selectedId={null} onSelect={vi.fn()} />);
 
-    const allRow = rowFor('All Categories');
+    const allRow = rowFor('All');
     expect(within(allRow).getByText(String(SUM_OF_CATEGORY_COUNTS))).toBeInTheDocument();
   });
 });
