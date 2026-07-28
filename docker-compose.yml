@@ -1,4 +1,4 @@
-# One-command local stack: Postgres + Django API + Next.js web.
+# One-command local stack: Postgres + NestJS API + Next.js web.
 #   docker compose up --build
 # Values interpolate from a local .env (see .env.example); all have safe defaults.
 
@@ -21,15 +21,17 @@ services:
 
   backend:
     build: ./backend
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    # TypeORM creates the schema on first boot (synchronize); then it serves.
     environment:
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env (see .env.example)}
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      NODE_ENV: production
+      PORT: "8000"
       DATABASE_URL: postgres://notes:notes@db:5432/notes
       FRONTEND_ORIGIN: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (see .env.example)}
+      JWT_ACCESS_TTL_MIN: ${JWT_ACCESS_TTL_MIN:-15}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-false}
+      JWT_COOKIE_SAMESITE: ${JWT_COOKIE_SAMESITE:-Lax}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
       LLM_CLASSIFIER_MODEL: ${LLM_CLASSIFIER_MODEL:-llama-3.1-8b-instant}
