@@ -1,6 +1,13 @@
 /** JWT + cookie settings, read from the environment (with dev-safe defaults). */
-export const jwtSecret = (): string =>
-  process.env.JWT_SECRET ?? 'dev-insecure-change-me-in-prod';
+export const jwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  // Fail fast in production rather than signing tokens with a public constant.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be set in production.');
+  }
+  return 'dev-insecure-change-me-in-prod';
+};
 
 export const accessTtlMin = (): number => Number(process.env.JWT_ACCESS_TTL_MIN ?? 15);
 export const refreshTtlDays = (): number => Number(process.env.JWT_REFRESH_TTL_DAYS ?? 7);
@@ -21,9 +28,13 @@ export function cookieOptions(maxAgeMs: number): CookieOpts {
     | 'lax'
     | 'strict'
     | 'none';
+  // Secure defaults to on in production (unless explicitly disabled), so a deploy
+  // that forgets JWT_COOKIE_SECURE doesn't ship auth cookies over plaintext HTTP.
+  const rawSecure = process.env.JWT_COOKIE_SECURE;
+  const secure = rawSecure !== undefined ? rawSecure === 'true' : process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    secure: process.env.JWT_COOKIE_SECURE === 'true',
+    secure,
     sameSite,
     path: '/',
     maxAge: maxAgeMs,

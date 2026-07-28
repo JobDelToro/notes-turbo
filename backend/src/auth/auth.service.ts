@@ -1,9 +1,5 @@
-import { randomUUID } from 'node:crypto';
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
@@ -27,6 +23,19 @@ interface RefreshPayload {
   exp?: number;
 }
 
+// A throwaway bcrypt hash used to equalize login timing on the user-not-found
+// path (so login time doesn't reveal whether an email is registered).
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
+
+/**
+ * Pre-hash the password with SHA-256 before bcrypt. bcrypt silently truncates
+ * input at 72 bytes; SHA-256 (base64) is well under that, so arbitrarily long
+ * passwords keep their full entropy and nothing is silently dropped.
+ */
+function prehash(password: string): string {
+  return createHash('sha256').update(password, 'utf8').digest('base64');
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,11 +48,11 @@ export class AuthService {
   /** Create a user (email is lowercased + unique), hash the password, seed categories. */
   async register(email: string, password: string): Promise<User> {
     const normalized = email.toLowerCase();
+    validatePasswordStrength(password, normalized);
     if (await this.users.existsBy({ email: normalized })) {
       throw new BadRequestException('A user with this email already exists.');
     }
-    validatePasswordStrength(password);
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(prehash(password), 10);
     const user = await this.users.save(this.users.create({ email: normalized, password: hash }));
     await this.seedCategories(user.id);
     return user;
@@ -56,11 +65,15 @@ export class AuthService {
     await this.categories.save(rows);
   }
 
-  /** Return the user if the email + password are valid, else null. */
+  /** Return the user if the email + password are valid, else null (constant-ish time). */
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.users.findOne({ where: { email: email.toLowerCase() } });
-    if (!user) return null;
-    return (await bcrypt.compare(password, user.password)) ? user : null;
+    if (!user) {
+      // Spend the same work as a real compare so timing doesn't leak existence.
+      await bcrypt.compare(prehash(password), DUMMY_HASH);
+      return null;
+    }
+    return (await bcrypt.compare(prehash(password), user.password)) ? user : null;
   }
 
   async issueTokens(userId: number): Promise<TokenPair> {
@@ -75,10 +88,18 @@ export class AuthService {
     return { access, refresh };
   }
 
-  /** Verify the refresh token, revoke it (rotation), and mint a fresh pair. */
+  /**
+   * Verify the refresh token and rotate it. The single-use guarantee is enforced
+   * atomically by the DB: `claimJti` inserts the jti (primary key), so two
+   * concurrent refreshes race on the insert and exactly one wins — the loser
+   * (and any later replay) sees the jti already claimed and is rejected. No
+   * check-then-act window, and no 500 on the duplicate.
+   */
   async rotateRefresh(rawRefresh: string): Promise<TokenPair> {
-    const payload = await this.verifyRefresh(rawRefresh);
-    await this.revoke(payload.jti, payload.exp);
+    const payload = await this.verifyRefreshSignature(rawRefresh);
+    if (!(await this.claimJti(payload.jti, payload.exp))) {
+      throw new UnauthorizedException('Invalid or expired refresh token.');
+    }
     return this.issueTokens(payload.sub);
   }
 
@@ -86,14 +107,24 @@ export class AuthService {
   async revokeRefresh(rawRefresh: string | undefined): Promise<void> {
     if (!rawRefresh) return;
     try {
-      const payload = await this.verifyRefresh(rawRefresh);
-      await this.revoke(payload.jti, payload.exp);
+      const payload = await this.verifyRefreshSignature(rawRefresh);
+      await this.claimJti(payload.jti, payload.exp);
     } catch {
       // An invalid/expired token needs no revoking.
     }
   }
 
-  private async verifyRefresh(rawRefresh: string): Promise<RefreshPayload> {
+  /** Delete revoked-token rows whose underlying JWT has already expired. */
+  async purgeExpiredTokens(nowSeconds: number): Promise<number> {
+    const result = await this.revoked
+      .createQueryBuilder()
+      .delete()
+      .where('expires_at < :now', { now: nowSeconds })
+      .execute();
+    return result.affected ?? 0;
+  }
+
+  private async verifyRefreshSignature(rawRefresh: string): Promise<RefreshPayload> {
     let payload: RefreshPayload;
     try {
       payload = await this.jwt.verifyAsync<RefreshPayload>(rawRefresh, { secret: jwtSecret() });
@@ -103,13 +134,16 @@ export class AuthService {
     if (payload.type !== 'refresh' || !payload.jti) {
       throw new UnauthorizedException('Invalid refresh token.');
     }
-    if (await this.revoked.existsBy({ jti: payload.jti })) {
-      throw new UnauthorizedException('Invalid or expired refresh token.');
-    }
     return payload;
   }
 
-  private async revoke(jti: string, exp?: number): Promise<void> {
-    await this.revoked.save(this.revoked.create({ jti, expiresAt: exp ?? 0 }));
+  /** Atomically claim a jti. Returns false if it was already claimed (single-use). */
+  private async claimJti(jti: string, exp?: number): Promise<boolean> {
+    try {
+      await this.revoked.insert({ jti, expiresAt: exp ?? 0 });
+      return true;
+    } catch {
+      return false; // duplicate primary key => already revoked/rotated
+    }
   }
 }

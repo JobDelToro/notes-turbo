@@ -1,10 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/setup';
+import { ScopedThrottlerGuard } from '../src/common/scoped-throttler.guard';
 
 export const PASSWORD = 'Sup3r-secret-123';
 
@@ -17,7 +17,7 @@ export async function createApp(opts: { throttle?: boolean } = {}): Promise<INes
   process.env.NODE_ENV = 'test';
   const builder = Test.createTestingModule({ imports: [AppModule] });
   if (!opts.throttle) {
-    builder.overrideGuard(ThrottlerGuard).useValue({ canActivate: () => true });
+    builder.overrideGuard(ScopedThrottlerGuard).useValue({ canActivate: () => true });
   }
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication();

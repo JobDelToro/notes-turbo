@@ -14,11 +14,15 @@ const ENTITIES = [User, Category, Note, RevokedToken];
 export function databaseOptions(): TypeOrmModuleOptions {
   const url = process.env.DATABASE_URL;
   if (url) {
+    // Prod/Postgres: never auto-sync the schema (that can silently drop columns);
+    // apply versioned migrations on boot instead.
     return {
       type: 'postgres',
       url,
       entities: ENTITIES,
-      synchronize: true, // challenge scope; a real prod deploy would use migrations
+      migrations: [__dirname + '/migrations/*.{js,ts}'],
+      migrationsRun: true,
+      synchronize: false,
     };
   }
 

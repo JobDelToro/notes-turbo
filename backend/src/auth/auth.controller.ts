@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService, TokenPair } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -18,6 +18,8 @@ import { Public } from './public.decorator';
 import { CurrentUser } from './current-user.decorator';
 import { publicUser } from './user.serializer';
 import { User } from '../entities/user.entity';
+import { ScopedThrottlerGuard } from '../common/scoped-throttler.guard';
+import { ThrottleScope } from '../common/throttle-scope.decorator';
 import {
   ACCESS_COOKIE,
   REFRESH_COOKIE,
@@ -26,12 +28,13 @@ import {
   refreshMaxAgeMs,
 } from './jwt.config';
 
-// The auth endpoints (register/login/refresh) are rate-limited to blunt
-// brute-force; `me`/`logout` are not.
+// register/login/refresh SHARE one 10/min counter (the `auth` scope), matching
+// Django's ScopedRateThrottle; `me`/`logout` are not throttled.
 const AUTH_RATE = { default: { limit: 10, ttl: 60_000 } };
 
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
+@UseGuards(ScopedThrottlerGuard)
+@ThrottleScope('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 

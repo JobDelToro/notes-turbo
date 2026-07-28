@@ -39,29 +39,31 @@ export class NotesService {
   }
 
   async create(userId: number, dto: CreateNoteDto): Promise<Note> {
-    await this.assertCategoryOwned(userId, dto.category);
+    const category = await this.resolveCategory(userId, dto.category);
     const note = this.notes.create({
       userId,
       title: dto.title ?? '',
       content: dto.content ?? '',
-      categoryId: dto.category ?? null,
+      categoryId: category?.id ?? null,
     });
     const saved = await this.notes.save(note);
-    return this.findOwned(userId, saved.id);
+    saved.category = category; // attach for serialization without a refetch
+    return saved;
   }
 
   async update(userId: number, id: number, dto: UpdateNoteDto): Promise<Note> {
-    const note = await this.notes.findOne({ where: { id, userId } });
+    const note = await this.notes.findOne({ where: { id, userId }, relations: ['category'] });
     if (!note) throw new NotFoundException('No Note matches the given query.');
 
     if (dto.title !== undefined) note.title = dto.title;
     if (dto.content !== undefined) note.content = dto.content;
     if (dto.category !== undefined) {
-      await this.assertCategoryOwned(userId, dto.category);
-      note.categoryId = dto.category;
+      const category = await this.resolveCategory(userId, dto.category);
+      note.category = category;
+      note.categoryId = category?.id ?? null;
     }
     await this.notes.save(note);
-    return this.findOwned(userId, id);
+    return note; // relation is already in hand — no refetch
   }
 
   async remove(userId: number, id: number): Promise<void> {
@@ -69,11 +71,14 @@ export class NotesService {
     if (!result.affected) throw new NotFoundException('No Note matches the given query.');
   }
 
-  /** A note may only reference a category its owner holds. */
-  private async assertCategoryOwned(userId: number, categoryId?: number | null): Promise<void> {
-    if (categoryId == null) return;
-    if (!(await this.categories.existsBy({ id: categoryId, userId }))) {
-      throw new BadRequestException('Invalid category.');
-    }
+  /** Resolve a category the user owns (or null); one lookup that also validates ownership. */
+  private async resolveCategory(
+    userId: number,
+    categoryId?: number | null,
+  ): Promise<Category | null> {
+    if (categoryId == null) return null;
+    const category = await this.categories.findOne({ where: { id: categoryId, userId } });
+    if (!category) throw new BadRequestException('Invalid category.');
+    return category;
   }
 }

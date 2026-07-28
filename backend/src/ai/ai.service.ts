@@ -43,23 +43,32 @@ const generatorModel = (): string => process.env.LLM_GENERATOR_MODEL ?? 'llama-3
 @Injectable()
 export class AiService {
   private readonly logger = new Logger('AiService');
+  // Memoized client, rebuilt only if the API key changes (it is static per process).
+  private cached?: { key: string; client: ChatClient | null };
 
-  /** Build the LLM client, or null when AI is not configured. Overridable in tests. */
+  /** Build (once) the LLM client, or null when AI is not configured. Overridable in tests. */
   createClient(): ChatClient | null {
-    if (!apiKey()) return null;
-    try {
-      // 12s ceiling so a slow provider can't tie up a worker (SDK default is 600s);
-      // no SDK retry — the heuristic IS the fallback.
-      return new OpenAI({
-        apiKey: apiKey(),
-        baseURL: baseURL(),
-        timeout: 12_000,
-        maxRetries: 0,
-      }) as unknown as ChatClient;
-    } catch {
-      this.logger.error('Could not initialize the LLM client');
-      return null;
+    const key = apiKey();
+    if (this.cached && this.cached.key === key) return this.cached.client;
+
+    let client: ChatClient | null = null;
+    if (key) {
+      try {
+        // 12s ceiling so a slow provider can't tie up a worker (SDK default is 600s);
+        // no SDK retry — the heuristic IS the fallback.
+        client = new OpenAI({
+          apiKey: key,
+          baseURL: baseURL(),
+          timeout: 12_000,
+          maxRetries: 0,
+        }) as unknown as ChatClient;
+      } catch {
+        this.logger.error('Could not initialize the LLM client');
+        client = null;
+      }
     }
+    this.cached = { key, client };
+    return client;
   }
 
   async categorize(content: string, categories: CategoryMini[]): Promise<CategorizeResult> {

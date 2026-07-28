@@ -7,6 +7,7 @@ import { RevokedToken } from '../entities/revoked-token.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { TokenCleanupService } from './token-cleanup.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Category, RevokedToken])],
@@ -14,6 +15,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
   providers: [
     AuthService,
     JwtAuthGuard,
+    TokenCleanupService,
     // Applied globally: every route requires auth unless marked @Public().
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],

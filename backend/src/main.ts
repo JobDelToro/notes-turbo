@@ -16,6 +16,16 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  // Only trust proxy headers (X-Forwarded-For, used for the client IP behind a
+  // reverse proxy) when explicitly configured, so a direct deploy can't be
+  // spoofed to evade rate limits. Set TRUST_PROXY to a hop count or "true".
+  const trustProxy = process.env.TRUST_PROXY;
+  if (trustProxy) {
+    const value = /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy === 'true';
+    app.getHttpAdapter().getInstance().set('trust proxy', value);
+  }
+
   configureApp(app);
   app.enableCors({
     origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000',

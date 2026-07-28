@@ -31,4 +31,19 @@ describe('Rate limiting (e2e)', () => {
     }
     await agent.post('/api/ai/categorize').send({ content: 'note' }).expect(429);
   });
+
+  it('all auth routes share one 10/min counter (scoped, like Django)', async () => {
+    const bad = { email: 'nobody@example.com', password: 'wrong-password' };
+    for (let i = 0; i < 5; i++) await request(server).post('/api/auth/login').send(bad);
+    for (let i = 0; i < 5; i++) await request(server).post('/api/auth/refresh');
+    // 11th auth request in the window (any auth route) is throttled.
+    await request(server).post('/api/auth/login').send(bad).expect(429);
+  });
+
+  it('all AI routes share one 20/min counter (scoped, like Django)', async () => {
+    const { agent } = await newUser(app, 'alice@example.com');
+    for (let i = 0; i < 10; i++) await agent.post('/api/ai/categorize').send({ content: 'n' }).expect(200);
+    for (let i = 0; i < 10; i++) await agent.post('/api/ai/summarize').send({ content: 'n' }).expect(200);
+    await agent.post('/api/ai/summarize').send({ content: 'n' }).expect(429);
+  });
 });
